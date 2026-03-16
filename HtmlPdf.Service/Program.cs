@@ -1,7 +1,7 @@
 using HtmlPdf.Service.Infrastructure;
-using HtmlPdf.Service.Models;
 using HtmlPdf.Service.Renderer;
 using Microsoft.AspNetCore.Mvc;
+using Pdf.Abstractions.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +23,14 @@ builder.Services.AddScoped<IPdfRenderer, PuppeteerPdfRenderer>();
 
 var app = builder.Build();
 
+// ── Allowed templates (whitelist) ────────────────────────────────────────────
+// Only template names in this set are accepted to prevent path-traversal attacks.
+var allowedTemplates = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    "delivery",
+    "invoice"
+};
+
 // ── Endpoints ────────────────────────────────────────────────────────────────
 
 /// <summary>
@@ -36,6 +44,9 @@ app.MapPost("/pdf/render", async (
 {
     if (string.IsNullOrWhiteSpace(request.Template))
         return Results.BadRequest("'template' field is required.");
+
+    if (!allowedTemplates.Contains(request.Template))
+        return Results.BadRequest($"Unknown template '{request.Template}'. Allowed values: {string.Join(", ", allowedTemplates)}.");
 
     // Build a dynamic model from the flat Data dictionary plus the top-level
     // language / direction fields so templates can use @Model.Language, etc.

@@ -17,9 +17,9 @@
 
   <!-- Copy Razor templates to the output directory so RazorLight can find them at runtime. -->
   <ItemGroup>
-    <None Update="Templates\**\*.cshtml">
+    <Content Update="Templates/**/*.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using HtmlPdf.Service.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,12 @@ namespace HtmlPdf.Service.Renderer
 {
     public sealed class PuppeteerPdfRenderer : IPdfRenderer
     {
+        /// <summary>
+        /// Limits the number of Chromium pages that can be open simultaneously
+        /// to prevent resource exhaustion under high load.
+        /// </summary>
+        private static readonly SemaphoreSlim _concurrencyLimiter = new SemaphoreSlim(10, 10);
+
         private readonly BrowserProvider _browserProvider;
         private readonly TemplateRenderer _templateRenderer;
         private readonly ILogger<PuppeteerPdfRenderer> _logger;
@@ -31,29 +38,37 @@ namespace HtmlPdf.Service.Renderer
 
             var browser = await _browserProvider.GetBrowserAsync();
 
-            await using var page = await browser.NewPageAsync();
-
-            await page.SetContentAsync(html, new NavigationOptions
+            await _concurrencyLimiter.WaitAsync();
+            try
             {
-                WaitUntil = [WaitUntilNavigation.Networkidle0]
-            });
+                await using var page = await browser.NewPageAsync();
 
-            var pdf = await page.PdfDataAsync(new PdfOptions
-            {
-                Format = PaperFormat.A4,
-                PrintBackground = true,
-                MarginOptions = new MarginOptions
+                await page.SetContentAsync(html, new NavigationOptions
                 {
-                    Top = "15mm",
-                    Bottom = "15mm",
-                    Left = "15mm",
-                    Right = "15mm"
-                }
-            });
+                    WaitUntil = [WaitUntilNavigation.Networkidle0]
+                });
 
-            _logger.LogInformation("PDF rendered successfully for template '{Template}' ({Bytes} bytes)", templateName, pdf.Length);
+                var pdf = await page.PdfDataAsync(new PdfOptions
+                {
+                    Format = PaperFormat.A4,
+                    PrintBackground = true,
+                    MarginOptions = new MarginOptions
+                    {
+                        Top = "15mm",
+                        Bottom = "15mm",
+                        Left = "15mm",
+                        Right = "15mm"
+                    }
+                });
 
-            return pdf;
+                _logger.LogInformation("PDF rendered successfully for template '{Template}' ({Bytes} bytes)", templateName, pdf.Length);
+
+                return pdf;
+            }
+            finally
+            {
+                _concurrencyLimiter.Release();
+            }
         }
     }
 }

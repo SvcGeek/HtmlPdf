@@ -1,25 +1,26 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <ItemGroup>
-    <ProjectReference Include="..\Pdf.Abstractions\Pdf.Abstractions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Pdf.Abstractions\Pdf.Abstractions.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="PuppeteerSharp" Version="24.39.0" />
-    <PackageReference Include="RazorLight" Version="2.3.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="PuppeteerSharp" Version="24.39.0" />
+		<PackageReference Include="RazorLight" Version="2.3.1" />
+	</ItemGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+	</PropertyGroup>
 
-  <!-- Copy Razor templates to the output directory so RazorLight can find them at runtime. -->
-  <ItemGroup>
-    <Content Update="Templates/**/*.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<!-- Copy Razor templates to the output directory so RazorLight can find them at runtime. -->
+	<ItemGroup>
+		<Content Update="Templates/**/*.cshtml">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>

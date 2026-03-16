@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="HtmlPdf.Service/HtmlPdf.Service.csproj" />
   <Project Path="Pdf.Abstractions/Pdf.Abstractions.csproj" />
 </Solution>

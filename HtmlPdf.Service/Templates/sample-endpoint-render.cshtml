@@ -1,0 +1,296 @@
+﻿@using System.Collections.Generic
+@using System.Dynamic
+@using Pdf.Abstractions.DTO
+@{
+    var modelData = (SampleEndpointRenderDTO)Model;
+}
+<!DOCTYPE html>
+
+<html lang="@modelData.Language" dir="@modelData.Direction">
+<head>
+    <meta charset="utf-8" />
+
+    <style>
+
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 13px;
+                margin: 40px;
+                color: #222;
+            }
+
+            h1, h2, h3 {
+                margin: 0;
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 30px;
+            }
+
+            .logo {
+                font-size: 32px;
+                font-weight: bold;
+            }
+
+            .meta {
+                text-align: right;
+            }
+
+            .client-block {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 30px;
+            }
+
+            .section-title {
+                margin-top: 25px;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th {
+                text-align: left;
+                font-size: 12px;
+                color: #666;
+                padding-bottom: 6px;
+            }
+
+            td {
+                padding: 12px 0;
+                border-top: 1px solid #eee;
+                vertical-align: top;
+            }
+
+            .product-row {
+                display: flex;
+                gap: 10px;
+            }
+
+            .product-img {
+                width: 70px;
+                height: 90px;
+                object-fit: cover;
+            }
+
+            .product-name {
+                font-weight: bold;
+            }
+
+            .product-code {
+                font-size: 11px;
+                color: #777;
+            }
+
+            .price-old {
+                color: #999;
+                font-size: 11px;
+            }
+
+            .invoice {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+            }
+
+            .balance-box {
+                background: #f3f3f3;
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            .signature {
+                margin-top: 40px;
+            }
+
+                .signature img {
+                    max-height: 120px;
+                }
+
+            .footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 11px;
+                color: #777;
+            }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="header">
+
+        <div class="logo">
+            @modelData.Brand
+        </div>
+
+        <div class="meta">
+            <div>Order ID: @modelData.OrderId</div>
+            <div>Order date: @modelData.OrderDate.ToString("dd/MM/yyyy")</div>
+        </div>
+
+    </div>
+
+
+    <div class="client-block">
+
+        <div>
+
+            <div>Client: @modelData.Client?.Name</div>
+            <div>Client ID: @modelData.Client?.Id</div>
+            <div>Mobile: @modelData.Client?.Mobile</div>
+            <div>E-mail: @modelData.Client?.Email</div>
+
+        </div>
+
+        <div>
+
+            <div>Client Advisor: @modelData.Advisor</div>
+            <div>Client Advisor ID: @modelData.AdvisorId</div>
+            <div>Store: @modelData.Store</div>
+
+        </div>
+
+    </div>
+
+
+    <div class="section-title">Order details</div>
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th style="width:40%">Look / Product</th>
+                <th>Material</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Total</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var item in modelData.Items)
+            {
+
+                <tr>
+
+                    <td>
+
+                        <div class="product-row">
+
+                            <img class="product-img" src="@item.ImageUrl" />
+
+                            <div>
+                                <div class="product-name">@item.ProductName</div>
+                                <div>@item.Look</div>
+                                <div class="product-code">@item.ProductCode</div>
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>@item.Material</td>
+                    <td>@item.Color</td>
+                    <td>@item.Size</td>
+                    <td>@item.Quantity</td>
+
+                    <td>
+                        <div>@item.UnitPrice.ToString("C")</div>
+                        <div class="price-old">@item.OldUnitPrice.ToString("C")</div>
+                    </td>
+
+                    <td>
+                        <div>@item.Total.ToString("C")</div>
+                        <div class="price-old">@item.OldTotal.ToString("C")</div>
+                    </td>
+
+                </tr>
+
+            }
+
+        </tbody>
+
+    </table>
+
+
+    <div class="invoice">
+
+        <div>
+
+            <div class="section-title">Invoice breakdown</div>
+
+            <div>Ordered Items: @modelData.TotalItems unit</div>
+            <div>Discount: @modelData.Discount.ToString("C")</div>
+            <div>Total Amount: @modelData.TotalAmount.ToString("C")</div>
+            <div>Advanced Payment: @modelData.AdvancePayment.ToString("C")</div>
+
+            <div class="balance-box">
+                <strong>Order Balance: @modelData.Balance.ToString("C")</strong>
+                <div style="font-size:11px">
+                    Payment must be made upon collection at the pickup store
+                </div>
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <div class="section-title">Pick up in Store</div>
+
+            <div>@modelData.StoreAddress</div>
+            <div>@modelData.StoreCity</div>
+            <div>@modelData.StorePhone</div>
+
+        </div>
+
+    </div>
+
+
+    <div class="signature">
+
+        <div class="section-title">Client signature</div>
+
+        @if (!string.IsNullOrEmpty(modelData.ClientSignature))
+        {
+            <img src="data:image/png;base64,@modelData.ClientSignature" />
+        }
+
+        <p style="font-size:11px; color:#777">
+
+            You acknowledge that this order is processed under the Terms and Conditions attached hereto.
+            Your product selection will be manufactured according to your high manufacturing standards
+            and is expected to be made available for collection.
+
+        </p>
+
+    </div>
+
+
+    <div class="footer">
+
+        © @DateTime.Now.Year @modelData.Brand | Terms & Conditions
+
+    </div>
+
+</body>
+
+</html>
+
+
+@{
+}

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PuppeteerSharp;
 
 namespace HtmlPdf.Service.Infrastructure
@@ -17,21 +18,36 @@ namespace HtmlPdf.Service.Infrastructure
         private IBrowser? _browser;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly ILogger<BrowserProvider> _logger;
+        private readonly BrowserOptions _options;
 
-        public BrowserProvider(ILogger<BrowserProvider> logger)
+        public BrowserProvider(ILogger<BrowserProvider> logger, IOptions<BrowserOptions> options)
         {
             _logger = logger;
+            _options = options.Value;
         }
 
-        /// <summary>Returns the shared browser, initialising it on first call.</summary>
+        /// <summary>
+        /// Returns the shared browser instance, initializing it on first call.
+        /// Uses double-checked locking pattern to ensure thread-safe lazy initialization.
+        /// </summary>
+        /// <remarks>
+        /// The double-check pattern:
+        /// 1. First check (no lock): Fast path when browser is already initialized
+        /// 2. Acquire lock: Ensures only one thread initializes the browser
+        /// 3. Second check (inside lock): Handles race condition where multiple threads
+        ///    pass the first check before initialization completes
+        /// </remarks>
         public async Task<IBrowser> GetBrowserAsync()
         {
+            // Fast path: return immediately if already initialized
             if (_browser is not null)
                 return _browser;
 
+            // Slow path: initialize the browser with thread safety
             await _lock.WaitAsync();
             try
             {
+                // Double-check: another thread might have initialized while we waited for the lock
                 if (_browser is not null)
                     return _browser;
 
@@ -45,10 +61,24 @@ namespace HtmlPdf.Service.Infrastructure
             return _browser;
         }
 
+        /// <summary>
+        /// Downloads (if needed) and launches a headless Chromium browser instance.
+        /// </summary>
+        /// <remarks>
+        /// Launch options explained:
+        /// - Headless=true: Runs browser without UI (for server environments)
+        /// - --no-sandbox: Required in containerized environments (Docker, Kubernetes)
+        /// - --disable-setuid-sandbox: Alternative sandboxing method for environments without SUID
+        /// - --disable-dev-shm-usage: Writes shared memory to /tmp instead of /dev/shm
+        ///   (fixes crashes in Docker containers with limited /dev/shm space)
+        /// </remarks>
         private async Task<IBrowser> LaunchAsync()
         {
             _logger.LogInformation("Downloading / verifying Chromium…");
+            // BrowserFetcher downloads the correct Chromium version if not already present
+            // Downloads to ~/.local/share/puppeteer on Linux or %USERPROFILE%/.local-chromium on Windows
             var fetcher = new BrowserFetcher();
+
             await fetcher.DownloadAsync();
 
             _logger.LogInformation("Launching Chromium browser…");
@@ -62,12 +92,24 @@ namespace HtmlPdf.Service.Infrastructure
             return browser;
         }
 
-        // IHostedService: pre-warm the browser at application startup.
+        /// <summary>
+        /// IHostedService implementation: pre-warms the browser at application startup.
+        /// This prevents the first PDF request from experiencing a cold start delay.
+        /// </summary>
+        /// <remarks>
+        /// By implementing IHostedService, the browser is launched before the application
+        /// starts accepting HTTP requests. This can add 2-5 seconds to startup time
+        /// but eliminates the delay on the first PDF generation request.
+        /// </remarks>
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await GetBrowserAsync();
         }
 
+        /// <summary>
+        /// IHostedService implementation: called during graceful shutdown.
+        /// Cleanup is handled by DisposeAsync instead.
+        /// </summary>
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         public async ValueTask DisposeAsync()

@@ -1,65 +1,34 @@
-using HtmlPdf.Service.Infrastructure;
-using HtmlPdf.Service.Renderer;
-using Microsoft.AspNetCore.Mvc;
-using Pdf.Abstractions.Models;
+using HtmlPdf.Service.DependencyInjection;
+using HtmlPdf.Service.Extensions;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HtmlPdf.Service - Minimal Web API for HTML-to-PDF conversion
+// ══════════════════════════════════════════════════════════════════════════════
+// Architecture:
+// 1. Receives HTTP POST requests with template name + data
+// 2. Renders Razor template to HTML (via RazorLight)
+// 3. Converts HTML to PDF using headless Chromium (via PuppeteerSharp)
+// 4. Returns PDF bytes to the client
+// ══════════════════════════════════════════════════════════════════════════════
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Logging ──────────────────────────────────────────────────────────────────
+// ── Logging Configuration ────────────────────────────────────────────────────
+// Clear default providers and use console logging for simplicity
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// ── Services ─────────────────────────────────────────────────────────────────
+// ── Dependency Injection ─────────────────────────────────────────────────────
+// Register all core services: browser provider, template renderer, PDF renderer,
+// and endpoint handlers (see ServiceCollectionExtensions for details)
+builder.Services.AddCoreDependencies(builder.Configuration);
 
-// Singleton browser – launched once at startup, reused for every request.
-builder.Services.AddSingleton<BrowserProvider>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<BrowserProvider>());
-
-// Template renderer (caches compiled Razor templates in memory).
-builder.Services.AddSingleton<TemplateRenderer>();
-
-// PDF renderer – uses the shared browser and the template renderer.
-builder.Services.AddScoped<IPdfRenderer, PuppeteerPdfRenderer>();
-
+// ── Application Pipeline ─────────────────────────────────────────────────────
 var app = builder.Build();
 
-// ── Allowed templates (whitelist) ────────────────────────────────────────────
-// Only template names in this set are accepted to prevent path-traversal attacks.
-var allowedTemplates = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-{
-    "delivery",
-    "invoice"
-};
+// Map all PDF rendering endpoints (automatically discovers IEndpoint implementations)
+// Each endpoint defines its own route pattern (e.g., /pdf/sample-endpoint-render)
+app.MapRenderPdfEndpoints();
 
-// ── Endpoints ────────────────────────────────────────────────────────────────
-
-/// <summary>
-/// POST /pdf/render
-/// Body: { "template": "delivery", "language": "en", "direction": "ltr", "data": { … } }
-/// Response: application/pdf
-/// </summary>
-app.MapPost("/pdf/render", async (
-    [FromBody] RenderPdfRequest request,
-    IPdfRenderer renderer) =>
-{
-    if (string.IsNullOrWhiteSpace(request.Template))
-        return Results.BadRequest("'template' field is required.");
-
-    if (!allowedTemplates.Contains(request.Template))
-        return Results.BadRequest($"Unknown template '{request.Template}'. Allowed values: {string.Join(", ", allowedTemplates)}.");
-
-    // Build a dynamic model from the flat Data dictionary plus the top-level
-    // language / direction fields so templates can use @Model.Language, etc.
-    var modelDict = new System.Dynamic.ExpandoObject() as IDictionary<string, object?>;
-    modelDict["Language"] = request.Language;
-    modelDict["Direction"] = request.Direction;
-
-    foreach (var kv in request.Data)
-        modelDict[kv.Key] = kv.Value;
-
-    var pdf = await renderer.RenderAsync(request.Template, modelDict);
-
-    return Results.File(pdf, "application/pdf", $"{request.Template}.pdf");
-});
-
+// Start the web server and begin accepting requests
 app.Run();

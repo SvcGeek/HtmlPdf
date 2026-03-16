@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="HtmlPdf.Service/HtmlPdf.Service.csproj" />
+  <Project Path="Pdf.Abstractions/Pdf.Abstractions.csproj" />
+</Solution>

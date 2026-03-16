@@ -1,0 +1,118 @@
+@using System.Collections.Generic
+@using System.Dynamic
+@{
+    var lang = (string)(Model.Language ?? "en");
+    var dir = (string)(Model.Direction ?? "ltr");
+    var title = (string)(Model.Title ?? string.Empty);
+    var invoiceNumber = (string)(Model.InvoiceNumber ?? string.Empty);
+    var date = (string)(Model.Date ?? string.Empty);
+    var signature = (string)(Model.Signature ?? string.Empty);
+    var items = Model.Items as IEnumerable<dynamic> ?? Array.Empty<dynamic>();
+
+    decimal total = 0;
+    foreach (var item in items)
+    {
+        total += (decimal)(item.Total ?? 0m);
+    }
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
+<head>
+<meta charset="utf-8"/>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+h1 {
+    border-bottom: 2px solid #333;
+    padding-bottom: 8px;
+}
+
+.meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+td, th {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: start;
+}
+
+th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.total-row td {
+    font-weight: bold;
+    background-color: #f8f8f8;
+}
+
+.signature {
+    margin-top: 32px;
+}
+
+.signature img {
+    max-width: 200px;
+    max-height: 80px;
+    display: block;
+    border: 1px solid #aaa;
+    padding: 4px;
+}
+</style>
+</head>
+<body>
+
+<h1>@title</h1>
+
+<div class="meta">
+    <span>Invoice #: @invoiceNumber</span>
+    <span>Date: @date</span>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Description</th>
+<th>Qty</th>
+<th>Unit Price</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody>
+@foreach (var item in items)
+{
+<tr>
+<td>@item.Name</td>
+<td>@item.Qty</td>
+<td>@item.UnitPrice</td>
+<td>@item.Total</td>
+</tr>
+}
+<tr class="total-row">
+<td colspan="3">Total</td>
+<td>@total</td>
+</tr>
+</tbody>
+</table>
+
+@if (!string.IsNullOrEmpty(signature))
+{
+<div class="signature">
+    <img src="data:image/png;base64,@signature" alt="Signature"/>
+</div>
+}
+
+</body>
+</html>

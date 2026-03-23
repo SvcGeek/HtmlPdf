@@ -1,4 +1,5 @@
-﻿using HtmlPdf.Service.Infrastructure;
+﻿using HtmlPdf.Service.Options;
+using HtmlPdf.Service.PdfEndpoints;
 using HtmlPdf.Service.Renderer;
 using Microsoft.Extensions.Options;
 using Pdf.Abstractions.DTO;
@@ -18,7 +19,7 @@ namespace HtmlPdf.Service.PdfHandlers
     /// 4. Create a .cshtml template in the Templates folder
     /// 5. Add the template name to appsettings.json under PdfRendering:AllowedTemplates
     /// </remarks>
-    public class SampleEndpointPdfHandler : IEndpoint
+    public class SampleEndpointPdfHandler : IPdfEndpoint
     {
         private readonly IPdfRenderer _renderer;
 
@@ -33,21 +34,13 @@ namespace HtmlPdf.Service.PdfHandlers
         }
 
         /// <summary>
-        /// Registers this handler as a POST endpoint in the application routing table.
-        /// </summary>
-        public void Map(IEndpointRouteBuilder app, IOptionsMonitor<PdfRenderingOptions> optionsMonitor)
-        {
-            app.MapPost(Pattern, (RenderPdfRequestBase request) => Handle(request, optionsMonitor));
-        }
-
-        /// <summary>
         /// Handles the PDF generation request with validation and model transformation.
         /// Uses IOptionsMonitor to access the current configuration (supports hot-reload).
         /// </summary>
         /// <param name="request">The incoming PDF render request with template name and data.</param>
         /// <param name="optionsMonitor">Monitor for accessing current configuration with hot-reload support.</param>
         /// <returns>PDF file result or BadRequest if validation fails.</returns>
-        public async Task<IResult> Handle(RenderPdfRequestBase request, IOptionsMonitor<PdfRenderingOptions> optionsMonitor)
+        public async Task<IResult> ProcessHandle(RenderPdfRequestBase request, IOptionsMonitor<PdfRenderingOptions> optionsMonitor)
         {
             // Validation: Ensure template name is provided
             if (string.IsNullOrWhiteSpace(request.Template))
@@ -66,7 +59,7 @@ namespace HtmlPdf.Service.PdfHandlers
             // Transform the generic request into a strongly-typed DTO
             // This converts the flexible Dictionary<string, object> Data property
             // into a SampleEndpointRenderDTO with proper types for template usage
-            var modelDict = IEndpoint.BuildModel<SampleEndpointRenderDTO>(request);
+            var modelDict = IPdfEndpoint.BuildModel<SampleEndpointRenderDTO>(request);
 
             // Render the PDF: Template → HTML → PDF bytes
             var pdf = await _renderer.RenderAsync(request.Template, modelDict);
@@ -74,6 +67,5 @@ namespace HtmlPdf.Service.PdfHandlers
             // Return the PDF as a downloadable file with appropriate content type
             return Results.File(pdf, "application/pdf", $"{request.Template}.pdf");
         }
-
     }
 }

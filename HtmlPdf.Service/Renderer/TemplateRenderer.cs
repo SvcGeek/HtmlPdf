@@ -1,6 +1,6 @@
 using RazorLight;
 
-namespace HtmlPdf.Service.Infrastructure
+namespace HtmlPdf.Service.Renderer
 {
     /// <summary>
     /// Renders Razor (.cshtml) templates to HTML strings using RazorLight.

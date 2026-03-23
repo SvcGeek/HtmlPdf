@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HtmlPdf.Service.Infrastructure
+namespace HtmlPdf.Service.Options
 {
     /// <summary>
     /// Configuration options for PDF rendering behavior.
@@ -37,10 +37,11 @@ namespace HtmlPdf.Service.Infrastructure
         /// 
         /// IMPORTANT: Changes to this list take effect immediately when appsettings.json is saved.
         /// </remarks>
-        public List<string> AllowedTemplates { get; set; } = new List<string>
-        {
-            "sample-endpoint-render"
-        };
+        public List<string> AllowedTemplates { get; set; } = [];
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<PagePdfOption> PagePdfOptions { get; set; } = [new()];
 
         /// <summary>
         /// Validates the configuration to ensure all settings are within acceptable ranges.

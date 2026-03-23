@@ -1,5 +1,7 @@
-﻿using HtmlPdf.Service.Infrastructure;
+﻿using HtmlPdf.Service.Options;
+using HtmlPdf.Service.PdfEndpoints;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace HtmlPdf.Service.Extensions
 {
@@ -23,7 +25,15 @@ namespace HtmlPdf.Service.Extensions
 
             // Resolve all registered IEndpoint implementations from DI
             // These were registered automatically in RegisterPdfHandlers()
-            var endpoints = app.Services.GetServices<IEndpoint>();
+            var endpoints = app.Services.GetServices<IPdfEndpoint>();
+
+
+            //easy way to check if the service is up and running without hitting the actual PDF rendering endpoints
+            app.Map("api/HealthCheck", async context =>
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.WriteAsync("OK");
+            });
 
             // Each endpoint registers its own route pattern and handler
             // Pass the options monitor so handlers can access the current whitelist

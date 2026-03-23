@@ -1,4 +1,6 @@
-﻿using PuppeteerSharp;
+﻿using HtmlPdf.Service.Options;
+using Microsoft.Extensions.Options;
+using PuppeteerSharp;
 using PuppeteerSharp.Media;
 
 namespace HtmlPdf.Service.Helpers
@@ -18,19 +20,32 @@ namespace HtmlPdf.Service.Helpers
         /// PrintBackground=true ensures CSS backgrounds and colors are included in the PDF.
         /// Without this, background colors and images would be omitted.
         /// </remarks>
-        public static PdfOptions GetDefaultPdfOptions()
+        public static PdfOptions GetPdfOptionsOrDefault(IOptionsMonitor<PdfRenderingOptions> options, string? pagePdfConfigurationName = null)
         {
+
+            var pdfOptions = new PagePdfOption();
+
+            if (options.CurrentValue.PagePdfOptions.Count > 0)
+            {
+                if (string.IsNullOrWhiteSpace(pagePdfConfigurationName)) throw new Exception("PagePdfOptions has multiple values, you need to specify the one you need!");
+                pdfOptions = options.CurrentValue.PagePdfOptions.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.NameOption) && x.NameOption.Equals(pagePdfConfigurationName, StringComparison.CurrentCultureIgnoreCase)) ?? throw new Exception($"PagePdfOptions with name {pagePdfConfigurationName} not found!");
+            }
+
+            pdfOptions = options.CurrentValue.PagePdfOptions.FirstOrDefault() ?? throw new Exception("Ops... PagePdfOptions need to be inited!");
+
             return new PdfOptions
             {
                 Format = PaperFormat.A4,
-                PrintBackground = true,
+                PrintBackground = pdfOptions.PrintBackground,
+                Landscape = pdfOptions.Landscape,
                 MarginOptions = new MarginOptions
                 {
-                    Top = "20mm",
-                    Bottom = "20mm",
-                    Left = "15mm",
-                    Right = "15mm"
-                }
+                    Top = pdfOptions.MarginOptions.Top,
+                    Bottom = pdfOptions.MarginOptions.Bottom,
+                    Left = pdfOptions.MarginOptions.Left,
+                    Right = pdfOptions.MarginOptions.Right
+                },
+
             };
         }
     }

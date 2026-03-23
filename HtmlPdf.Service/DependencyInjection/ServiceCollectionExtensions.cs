@@ -1,7 +1,7 @@
-﻿using HtmlPdf.Service.Infrastructure;
-using HtmlPdf.Service.PdfHandlers;
+﻿using HtmlPdf.Service.Helpers;
+using HtmlPdf.Service.Options;
+using HtmlPdf.Service.PdfEndpoints;
 using HtmlPdf.Service.Renderer;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HtmlPdf.Service.DependencyInjection
 {
@@ -62,7 +62,7 @@ namespace HtmlPdf.Service.DependencyInjection
         private static void RegisterPdfHandlers(this IServiceCollection services)
         {
             // Use reflection to find all concrete types that implement IEndpoint
-            var endpointType = typeof(IEndpoint);
+            var endpointType = typeof(IPdfEndpoint);
             var handlers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
                 .Where(t => endpointType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);

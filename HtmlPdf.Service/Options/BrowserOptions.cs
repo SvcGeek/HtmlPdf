@@ -1,4 +1,4 @@
-namespace HtmlPdf.Service.Infrastructure
+namespace HtmlPdf.Service.Options
 {
     /// <summary>
     /// Configuration options for the Chromium browser managed by BrowserProvider.

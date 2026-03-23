@@ -1,12 +1,7 @@
 using HtmlPdf.Service.Helpers;
-using HtmlPdf.Service.Infrastructure;
-using Microsoft.Extensions.Logging;
+using HtmlPdf.Service.Options;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
-using PuppeteerSharp.Media;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace HtmlPdf.Service.Renderer
 {
@@ -74,8 +69,8 @@ namespace HtmlPdf.Service.Renderer
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, 
-                        "Invalid PdfRenderingOptions configuration. Changes will not be applied. Error: {Message}", 
+                    _logger.LogError(ex,
+                        "Invalid PdfRenderingOptions configuration. Changes will not be applied. Error: {Message}",
                         ex.Message);
                     return;
                 }
@@ -110,12 +105,14 @@ namespace HtmlPdf.Service.Renderer
         /// <param name="templateName">Template name (without .cshtml extension).</param>
         /// <param name="model">Strongly-typed model passed to the Razor template as @Model.</param>
         /// <returns>Raw PDF bytes ready to be served to the client.</returns>
-        public async Task<byte[]> RenderAsync(string templateName, object model)
+        public async Task<byte[]> RenderAsync(string? templateName, object model)
         {
             _logger.LogInformation("Rendering PDF for template '{Template}'", templateName);
             var html = string.Empty;
             try
             {
+                ArgumentException.ThrowIfNullOrEmpty(templateName, "Template name cannot be null or empty.");
+
                 // Step 1: Compile and render the Razor template to HTML string
                 // RazorLight compiles .cshtml → C# code → Assembly → Executes with model
                 html = await _templateRenderer.RenderTemplateAsync(templateName, model);
@@ -146,8 +143,11 @@ namespace HtmlPdf.Service.Renderer
                     WaitUntil = [WaitUntilNavigation.Networkidle0]
                 });
 
+                //you can have different setting or page configuration, take a look
+
+                var pdfOptions = PuppeteerSharpPdfOptionHelper.GetPdfOptionsOrDefault(_options, pagePdfConfigurationName: null);
                 // Generate PDF from the rendered page using default A4 settings
-                var pdf = await page.PdfDataAsync(PuppeteerSharpPdfOptionHelper.GetDefaultPdfOptions());
+                var pdf = await page.PdfDataAsync(pdfOptions);
 
                 _logger.LogInformation("PDF rendered successfully for template '{Template}' ({Bytes} bytes)", templateName, pdf.Length);
 

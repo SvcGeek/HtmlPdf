@@ -1,12 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using HtmlPdf.Service.Options;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
 
-namespace HtmlPdf.Service.Infrastructure
+namespace HtmlPdf.Service.Helpers
 {
     /// <summary>
     /// Manages the lifecycle of a singleton Chromium browser instance.

@@ -26,7 +26,7 @@ namespace HtmlPdf.Service.PdfHandlers
         /// <summary>
         /// The URL pattern where this endpoint will be accessible.
         /// </summary>
-        public string Pattern => "/pdf/sample-endpoint-render";
+        public string Pattern => "sample-endpoint-render";
 
         public SampleEndpointPdfHandler(IPdfRenderer renderer)
         {

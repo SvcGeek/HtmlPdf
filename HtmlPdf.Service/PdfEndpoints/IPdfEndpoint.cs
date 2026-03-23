@@ -24,6 +24,13 @@ namespace HtmlPdf.Service.PdfEndpoints
         public virtual void Map(IEndpointRouteBuilder app, IOptionsMonitor<PdfRenderingOptions> optionsMonitor)
         {
             var endpointPath = string.Join("/", BASE_PATH, Pattern);
+#if DEBUG
+            // Log endpoint registration for debugging and development visibility
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"🔗 PDF Endpoint registered → POST /{endpointPath}");
+            Console.ResetColor();
+#endif
+
             app.MapPost(endpointPath, (RenderPdfRequestBase request) =>
             {
                 ValidateTemplate(request, optionsMonitor);

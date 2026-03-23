@@ -38,9 +38,18 @@ namespace HtmlPdf.Service.Options
         /// IMPORTANT: Changes to this list take effect immediately when appsettings.json is saved.
         /// </remarks>
         public List<string> AllowedTemplates { get; set; } = [];
+
         /// <summary>
-        /// 
+        /// Collection of named PDF configuration profiles.
+        /// Each profile defines page format, orientation, margins, and print settings.
+        /// At least one profile must be marked as IsDefault=true.
         /// </summary>
+        /// <remarks>
+        /// Enables multiple PDF layouts without code changes:
+        /// - Profile "default": Standard A4 portrait
+        /// - Profile "landscape-report": A4 landscape for wide tables
+        /// - Profile "minimal-margins": Maximum content space
+        /// </remarks>
         public List<PagePdfOption> PagePdfOptions { get; set; } = [new()];
 
         /// <summary>

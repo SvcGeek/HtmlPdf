@@ -2,8 +2,18 @@
 
 A high-performance, minimal web API for converting HTML to PDF using Razor templates and headless Chromium.
 
+## ⚡ Adding a New PDF Endpoint
+
+1. **DTO** — Create a class in `Pdf.Abstractions/DTO/` extending `BaseDTO<T>`.
+2. **Handler** — Add a new class in `PdfHandlerEndpoints/` implementing `IPdfEndpoint` and set its `Pattern` property to the route segment.
+3. **Template** — Add a `.cshtml` Razor file in `HtmlPdf.Service/Templates/` whose name matches the `template` field in the request.
+4. **Deploy** — Copy the new files to the server and restart the service. Auto-discovery registers the endpoint on startup.
+
+For the full step-by-step guide see [🛠️ Creating a New PDF Endpoint](#️-creating-a-new-pdf-endpoint).
+
 ## 🔥 Hot-Reload Configuration Support
-This service supports **runtime configuration updates** without restart! See [HOT-RELOAD-GUIDE.md](HOT-RELOAD-GUIDE.md) for details.
+
+This service supports
 
 ## 🏗️ Architecture Overview
 
@@ -16,13 +26,13 @@ HTTP Request → Endpoint Handler → Template Renderer → PDF Renderer → PDF
 
 ### Key Components
 
-1. **BrowserProvider** (`Infrastructure/BrowserProvider.cs`)
+1. **BrowserProvider** (`Helpers/BrowserProvider.cs`)
    - Manages a singleton headless Chromium instance
    - Downloads and launches browser on startup (pre-warming)
    - Uses double-checked locking for thread-safe lazy initialization
    - Implements IHostedService to start browser before accepting requests
 
-2. **TemplateRenderer** (`Infrastructure/TemplateRenderer.cs`)
+2. **TemplateRenderer** (`Renderer/TemplateRenderer.cs`)
    - Compiles and renders Razor (.cshtml) templates using RazorLight
    - Caches compiled templates in memory for performance
    - Requires `PreserveCompilationContext=true` in .csproj
@@ -32,12 +42,12 @@ HTTP Request → Endpoint Handler → Template Renderer → PDF Renderer → PDF
    - Manages concurrent page creation with SemaphoreSlim (max 10 concurrent)
    - Waits for network idle to ensure all resources are loaded
 
-4. **IEndpoint** (`Infrastructure/IEndpoint.cs`)
-   - Interface for PDF handler endpoints
-   - Provides `BuildModel<T>()` helper for transforming flexible request data into strongly-typed DTOs
+4. **IPdfEndpoint** (`PdfEndpoints/IPdfEndpoint.cs`)
+   - Interface for PDF endpoint handlers
+   - Defines `Pattern` for route registration and a default `Map()` implementation
 
 5. **Endpoint Handlers** (`PdfHandlerEndpoints/`)
-   - Implement specific PDF generation endpoints
+   - Implement `IPdfEndpoint` for specific PDF generation endpoints
    - Automatically discovered and registered via reflection
    - Each defines its own route pattern and DTO
 
@@ -161,38 +171,32 @@ public class MyCustomDTO
 ### Step 3: Create an Endpoint Handler
 ```csharp
 // HtmlPdf.Service/PdfHandlerEndpoints/MyCustomPdfHandler.cs
-public class MyCustomPdfHandler : IEndpoint
+public class MyCustomPdfHandler : IPdfEndpoint
 {
+    public string Pattern => "my-custom-template";
+
     private readonly IPdfRenderer _renderer;
+    private readonly ILogger<MyCustomPdfHandler> _logger;
 
-    public string Pattern => "/pdf/my-custom-template";
-
-    public MyCustomPdfHandler(IPdfRenderer renderer)
+    public MyCustomPdfHandler(IPdfRenderer renderer, ILogger<MyCustomPdfHandler> logger)
     {
         _renderer = renderer;
+        _logger = logger;
     }
 
-    public void Map(IEndpointRouteBuilder app, HashSet<string> allowedTemplates)
+    public async Task<IResult> ProcessHandle(RenderPdfRequestBase request, IOptionsMonitor<PdfRenderingOptions> optionsMonitor)
     {
-        app.MapPost(Pattern, (RenderPdfRequestBase request) => Handle(request, allowedTemplates));
-    }
-
-    public async Task<IResult> Handle(RenderPdfRequestBase request, HashSet<string> allowedTemplates)
-    {
-        // Validation
-        if (string.IsNullOrWhiteSpace(request.Template))
-            return Results.BadRequest("'template' field is required.");
-
-        if (allowedTemplates.Count > 0 && !allowedTemplates.Contains(request.Template))
-            return Results.BadRequest($"Unknown template '{request.Template}'.");
-
-        // Transform request to DTO
-        var model = IEndpoint.BuildModel<MyCustomDTO>(request);
-
-        // Generate PDF
-        var pdf = await _renderer.RenderAsync(request.Template, model);
-
-        return Results.File(pdf, "application/pdf", $"{request.Template}.pdf");
+        try
+        {
+            var model = ObjectMapperHelper.BuildModel<MyCustomDTO>(request);
+            var pdf = await _renderer.RenderAsync(request.Template, model);
+            return Results.File(pdf, "application/pdf", $"{request.Template}.pdf");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rendering PDF for request {Request}", System.Text.Json.JsonSerializer.Serialize(request));
+            return Results.Problem($"An error occurred while processing the PDF rendering request: {ex.Message}");
+        }
     }
 }
 ```
@@ -333,24 +337,42 @@ public MyHandler(IServiceScopeFactory scopeFactory)
 ```
 HtmlPdf.Service/
 ├── DependencyInjection/
-│   └── ServiceCollectionExtensions.cs    # DI registration
+│   └── ServiceCollectionExtensions.cs          # DI registration
 ├── Extensions/
-│   └── RenderPdfEndpointExtensions.cs    # Endpoint mapping + whitelist
+│   └── RenderPdfEndpointExtensions.cs          # Endpoint mapping
 ├── Helpers/
-│   └── PuppeteerSharpPdfOptionHelper.cs  # PDF generation settings
-├── Infrastructure/
-│   ├── BrowserOptions.cs                 # Configuration model
-│   ├── BrowserProvider.cs                # Chromium instance manager
-│   ├── IEndpoint.cs                      # Endpoint interface
-│   └── TemplateRenderer.cs               # Razor template engine
+│   ├── BrowserProvider.cs                      # Chromium instance manager
+│   └── PuppeteerSharpPdfOptionHelper.cs        # PDF generation settings
+├── Options/
+│   ├── BrowserOptions.cs                       # Browser configuration model
+│   ├── PagePdfOption.cs                        # PDF page options model
+│   └── PdfRenderingOptions.cs                  # PDF rendering configuration model
+├── PdfEndpoints/
+│   └── IPdfEndpoint.cs                         # Endpoint interface
 ├── PdfHandlerEndpoints/
-│   └── SampleEndpointPdfHandler.cs       # Example endpoint
+│   └── SampleEndpointPdfHandler.cs             # Sample PDF endpoint handler
 ├── Renderer/
-│   ├── IPdfRenderer.cs                   # PDF renderer interface
-│   └── PuppeteerPdfRenderer.cs           # PDF renderer implementation
+│   ├── IPdfRenderer.cs                         # PDF renderer interface
+│   ├── PuppeteerPdfRenderer.cs                 # PDF renderer implementation
+│   └── TemplateRenderer.cs                     # Razor template engine
 ├── Templates/
-│   └── sample-endpoint-render.cshtml     # Razor templates
-└── Program.cs                            # Application entry point
+│   └── sample-endpoint-render.cshtml           # Sample Razor template
+└── Program.cs                                  # Application entry point
+
+Pdf.Abstractions/
+├── DTO/
+│   ├── BaseDTO.cs                              # Generic base DTO (Language, Direction, …)
+│   ├── FooterDataDTO.cs
+│   ├── HtmlDataDTO.cs
+│   ├── OrderDTO.cs
+│   ├── ProductBaseDTO.cs                       # Base product row (Name, SkuCode, Image, …)
+│   ├── ProductTableHeaderDTO.cs
+│   └── SampleEndpointRenderDTO.cs              # Sample endpoint DTO
+├── Helper/
+│   └── ObjectMapperHelper.cs
+└── Models/
+    ├── OrderMapper.cs
+    └── RenderPdfRequestBase.cs                 # Base HTTP request model
 ```
 
 ## 🔗 Related Projects

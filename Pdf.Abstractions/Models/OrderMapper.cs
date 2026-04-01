@@ -1,66 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Pdf.Abstractions.Models
+﻿namespace Pdf.Abstractions.Models
 {
     /// <summary>
-    /// Simplified mapping structure for order data transformation.
-    /// Contains essential order fields without the complexity of OrderMapperDTO.
+    /// Data transfer object used as an intermediate mapping structure for order documents.
+    /// Facilitates transformation from external data sources to the OrderDTO format.
     /// </summary>
     /// <remarks>
-    /// Use this when you need basic order mapping without invoice breakdown details.
-    /// For full invoice details including financial breakdowns, use OrderMapperDTO.
+    /// This DTO acts as a flat structure that can be easily populated from various sources
+    /// (API responses, database queries) before being mapped to the hierarchical OrderDTO
+    /// used in Razor templates.
     /// </remarks>
     public class OrderMapper
     {
         /// <summary>Base64-encoded brand logo image.</summary>
-        public string? Logo { get; set; }
+        public string? BrandLogo { get; set; }
 
-        /// <summary>Brand or company name.</summary>
-        public string? Brand { get; set; }
+        /// <summary>MIME type of the logo image (e.g., "image/png", "image/jpeg").</summary>
+        public string? LogoType { get; set; }
 
-        // ── Header Information ────────────────────────────────────────────────────────
-        /// <summary>Document title for the header section.</summary>
+        // ── Header Section ───────────────────────────────────────────────────────────
+        /// <summary>Document title displayed in the header.</summary>
         public string? TitleHeader { get; set; }
 
-        /// <summary>Date string for the header section.</summary>
+        /// <summary>Date displayed in the header (formatted string).</summary>
         public string? DateHeader { get; set; }
 
-        // ── Client, Advisor, and Store Details ───────────────────────────────────────
-        /// <summary>Customer name.</summary>
-        public string? Client { get; set; }
+        // ── Client, Advisor, Store Information ───────────────────────────────────────
+        /// <summary>Customer/client name.</summary>
+        public string? ClientName { get; set; }
 
-        /// <summary>Customer ID or account number.</summary>
+        /// <summary>Customer identifier or account number.</summary>
         public string? ClientId { get; set; }
 
-        /// <summary>Customer mobile phone.</summary>
+        /// <summary>Customer mobile phone number.</summary>
         public string? Mobile { get; set; }
 
         /// <summary>Customer email address.</summary>
         public string? Email { get; set; }
 
-        /// <summary>Sales advisor name.</summary>
-        public string? ClientAdvisor { get; set; }
+        /// <summary>Store name where the order was placed.</summary>
+        public string? DeliveryDetails { get; set; }
 
-        /// <summary>Sales advisor ID.</summary>
-        public string? ClientAdvisorID { get; set; }
+        // ── Invoice Breakdown (Financial Details) ────────────────────────────────────
+        /// <summary>Total number of items ordered (sum of quantities).</summary>
+        public string? DeliveryAddress { get; set; }
 
-        /// <summary>Store name.</summary>
-        public string? Store { get; set; }
+        /// <summary>Discount amount in primary currency.</summary>
+        public string? DeliveryMobileContact { get; set; }
 
         // ── Client Signature ──────────────────────────────────────────────────────────
-        /// <summary>Base64-encoded client signature image for order confirmation.</summary>
+        /// <summary>Base64-encoded client signature image.</summary>
         public string? ClientSignatureImage { get; set; }
 
+        /// <summary>MIME type of the signature image (e.g., "image/png").</summary>
+        public string? ClientSignatureImageType { get; set; }
+
         // ── Footer Information ────────────────────────────────────────────────────────
-        /// <summary>Copyright notice text.</summary>
+        /// <summary>Copyright notice text for the document footer.</summary>
         public string? Copyright { get; set; }
 
-        /// <summary>VAT or tax identification number.</summary>
+        /// <summary>VAT/tax identification number.</summary>
         public string? Vat { get; set; }
 
-        /// <summary>URL to terms and conditions.</summary>
+        /// <summary>URL link to terms and conditions document.</summary>
         public string? TermsAndConditionLink { get; set; }
     }
 }

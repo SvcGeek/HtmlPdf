@@ -15,13 +15,7 @@
         public HtmlDataDTO? ImageLabel { get; set; }
 
         /// <summary>Header label for the product name/description column.</summary>
-        public HtmlDataDTO? ProductLabel { get; set; }
-
-        /// <summary>Header label for the material column.</summary>
-        public HtmlDataDTO? MaterialLabel { get; set; }
-
-        /// <summary>Header label for the color column.</summary>
-        public HtmlDataDTO? ColorLabel { get; set; }
+        public HtmlDataDTO? ProductDescriptionLabel { get; set; }
 
         /// <summary>Header label for the size column.</summary>
         public HtmlDataDTO? SizeLabel { get; set; }

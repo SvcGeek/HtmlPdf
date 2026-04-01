@@ -18,8 +18,6 @@ namespace Pdf.Abstractions.DTO
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? SkuCode { get; set; }
-        public string? Material { get; set; }
-        public string? Color { get; set; }
         public string? Size { get; set; }
         public int Qty { get; set; }
     }

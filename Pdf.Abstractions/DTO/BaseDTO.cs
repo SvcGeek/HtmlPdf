@@ -24,10 +24,6 @@ namespace Pdf.Abstractions.DTO
         /// </summary>
         public string Direction { get; set; } = "ltr";
 
-        // ── Branding ─────────────────────────────────────────────────────────────────────
-        /// <summary>Brand or company name to display on the document.</summary>
-        public string? Brand { get; set; }
-
         /// <summary>
         /// Base64-encoded brand logo image.
         /// Embedded directly in the PDF to avoid external resource dependencies.
@@ -59,25 +55,23 @@ namespace Pdf.Abstractions.DTO
 
         // ── Client Details Section ───────────────────────────────────────────────────────
         /// <summary>Client/customer name with optional label for translation.</summary>
-        public HtmlDataDTO? ClientLabelDetails { get; set; }
+        public HtmlDataDTO? ClientNameDetails { get; set; }
 
         /// <summary>Client ID or account number with optional label.</summary>
-        public HtmlDataDTO? ClientIDLabelDetails { get; set; }
+        public HtmlDataDTO? ClientIDDetails { get; set; }
 
         /// <summary>Client mobile phone number with optional label.</summary>
-        public HtmlDataDTO? MobileLabelDetails { get; set; }
+        public HtmlDataDTO? MobilelDetails { get; set; }
 
         /// <summary>Client email address with optional label.</summary>
-        public HtmlDataDTO? EmailLabelDetails { get; set; }
-
-        /// <summary>Sales advisor name with optional label.</summary>
-        public HtmlDataDTO? ClientAdvisorLabelDetails { get; set; }
-
-        /// <summary>Sales advisor ID with optional label.</summary>
-        public HtmlDataDTO? ClientAdvisorIDLabelDetails { get; set; }
+        public HtmlDataDTO? EmailDetails { get; set; }
 
         /// <summary>Store name with optional label.</summary>
-        public HtmlDataDTO? StoreLabelDetails { get; set; }
+        public HtmlDataDTO? DeliveryDetails { get; set; }
+
+        public HtmlDataDTO? DeliveryAddress { get; set; }
+
+        public HtmlDataDTO? DeliveryMobileContact { get; set; }
 
         // ── Products Section ─────────────────────────────────────────────────────────────
         /// <summary>Section title for the product items list (e.g., "Ordered Items").</summary>

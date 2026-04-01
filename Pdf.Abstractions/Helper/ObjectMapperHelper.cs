@@ -33,10 +33,10 @@ namespace Pdf.Abstractions.Helpers
         /// });
         /// </code>
         /// </example>
-        public static OrderDTO MapOrderTo(Action<OrderMapperDTO> objModelValues)
+        public static OrderDTO MapOrderTo(Action<OrderMapper> objModelValues)
         {
             // Create an empty mapper DTO
-            var orderMapperDTO = new OrderMapperDTO();
+            var orderMapperDTO = new OrderMapper();
 
             // Invoke the caller's configuration action to populate the mapper
             // This allows fluent syntax: MapOrderTo(m => { m.Client = "John"; m.Brand = "Acme"; })
@@ -50,21 +50,21 @@ namespace Pdf.Abstractions.Helpers
                 // by the endpoint handler from the request root (not from Data)
 
                 // Branding
-                Brand = orderMapperDTO.Brand,
-                BrandLogo = orderMapperDTO.Logo,
+                BrandLogo = orderMapperDTO.BrandLogo,
 
                 // Header fields wrapped in HtmlDataDTO
                 TitleHeader = new HtmlDataDTO { Value = orderMapperDTO.TitleHeader },
                 DateHeader = new HtmlDataDTO { Value = orderMapperDTO.DateHeader },
 
                 // Client details wrapped in HtmlDataDTO for label/value pattern
-                ClientLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.Client },
-                ClientIDLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.ClientId },
-                MobileLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.Mobile },
-                EmailLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.Email },
-                ClientAdvisorLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.ClientAdvisor },
-                ClientAdvisorIDLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.ClientAdvisorID },
-                StoreLabelDetails = new HtmlDataDTO { Value = orderMapperDTO.Store },
+                ClientNameDetails = new HtmlDataDTO { Value = orderMapperDTO.ClientName },
+                ClientIDDetails = new HtmlDataDTO { Value = orderMapperDTO.ClientId },
+                MobilelDetails = new HtmlDataDTO { Value = orderMapperDTO.Mobile },
+                EmailDetails = new HtmlDataDTO { Value = orderMapperDTO.Email },
+      
+                DeliveryDetails = new HtmlDataDTO { Value = orderMapperDTO.DeliveryDetails },
+                DeliveryAddress = new HtmlDataDTO { Value = orderMapperDTO.DeliveryDetails },
+                DeliveryMobileContact = new HtmlDataDTO { Value = orderMapperDTO.DeliveryDetails },
 
                 // Note: ProductItemsTitle, ProductTableHeader, and ProductItems
                 // are typically set outside this method as they require translation

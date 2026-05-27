@@ -11,6 +11,99 @@ A high-performance, minimal web API for converting HTML to PDF using Razor templ
 
 For the full step-by-step guide see [🛠️ Creating a New PDF Endpoint](#️-creating-a-new-pdf-endpoint).
 
+---
+
+## 📂 Dynamic PDF Endpoints
+
+> **In breve:** metti un file `.cshtml` nella cartella `DynamicTemplates`, riavvia il container, e il servizio espone automaticamente un endpoint PDF per quel template. Niente codice, niente build.
+
+### Come funziona
+
+Il servizio, ad ogni avvio, scansiona la cartella:
+```
+/app/Templates/DynamicTemplates/
+```
+Per ogni file `.cshtml` trovato crea automaticamente un endpoint:
+```
+POST /pdf/dynamic/{nome-del-file}
+```
+
+La cartella è un **volume Docker persistente**: i file che ci metti sopravvivono ai riavvii del container.
+
+---
+
+### Aggiungere un nuovo template in 3 passi
+
+**1. Crea il file `.cshtml`**
+
+Esempio: `fattura.cshtml`
+```html
+@model dynamic
+
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Fattura</h1>
+  <p>Cliente: @Model["cliente"]</p>
+  <p>Importo: @Model["importo"]</p>
+</body>
+</html>
+```
+
+Usa `@Model["chiave"]` per accedere ai dati che arrivano dal body della richiesta.
+
+**2. Copia il file nella cartella del volume**
+
+```sh
+# Esempio con bind mount locale
+cp fattura.cshtml ./volumes/dynamic-templates/
+```
+
+**3. Riavvia il container**
+
+```sh
+docker compose restart
+```
+
+Al prossimo avvio vedrai nel log:
+```
+📄 Dynamic template discovered → POST /pdf/dynamic/fattura
+```
+
+---
+
+### Fare una richiesta
+
+```http
+POST http://localhost:6000/pdf/dynamic/fattura
+Content-Type: application/json
+
+{
+  "data": {
+    "cliente": "Mario Rossi",
+    "importo": "1.200,00 €"
+  }
+}
+```
+
+La risposta è direttamente il file PDF (`application/pdf`).
+
+> **Nota:** il campo `template` nel body **non è necessario** per gli endpoint dinamici — il nome del template è già nell'URL.
+
+---
+
+### Differenze rispetto agli endpoint statici
+
+| | Endpoint statico | Endpoint dinamico |
+|---|---|---|
+| Dove si crea | Nel codice (`PdfHandlerEndpoints/`) | Nella cartella `DynamicTemplates/` |
+| Richiede build | ✅ Sì | ❌ No |
+| Modello dati | DTO tipizzato | JSON generico (`dynamic`) |
+| Whitelist | `appsettings.json` | File system (solo i `.cshtml` presenti) |
+| Attivazione | Al deploy | Al prossimo `docker restart` |
+
+---
+
 ## 🔥 Hot-Reload Configuration Support
 
 This service supports

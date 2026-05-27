@@ -11,9 +11,12 @@ namespace HtmlPdf.Service.Options
         public const string SectionName = "Browser";
 
         /// <summary>
-        /// The download path for Chromium binaries.
-        /// If not specified, defaults to the system temp directory.
+        /// Absolute path where Chromium binaries are stored.
+        /// Mount this path as a Docker volume to persist Chromium across restarts
+        /// and avoid re-downloading on every container start.
+        /// Default: /app/chromium (matches the declared Docker VOLUME).
+        /// Override in appsettings.Development.json for local development.
         /// </summary>
-        public string? DownloadPath { get; set; }
+        public string ChromiumPath { get; set; } = "/app/chromium";
     }
 }

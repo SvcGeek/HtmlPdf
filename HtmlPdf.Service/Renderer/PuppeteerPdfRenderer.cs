@@ -108,7 +108,7 @@ namespace HtmlPdf.Service.Renderer
         public async Task<byte[]> RenderAsync(string? templateName, object model)
         {
             _logger.LogInformation("Rendering PDF for template '{Template}'", templateName);
-            var html = string.Empty;
+            string html;
             try
             {
                 ArgumentException.ThrowIfNullOrEmpty(templateName, "Template name cannot be null or empty.");
@@ -124,7 +124,12 @@ namespace HtmlPdf.Service.Renderer
                 throw;
             }
 
-            // Step 2: Get the shared Chromium browser instance (initialized at startup)
+            return await RenderHtmlAsync(html);
+        }
+
+        public async Task<byte[]> RenderHtmlAsync(string html)
+        {
+            // Get the shared Chromium browser instance (initialized at startup)
             var browser = await _browserProvider.GetBrowserAsync();
 
             // Acquire a concurrency slot (max N concurrent pages)
@@ -149,7 +154,7 @@ namespace HtmlPdf.Service.Renderer
                 // Generate PDF from the rendered page using default A4 settings
                 var pdf = await page.PdfDataAsync(pdfOptions);
 
-                _logger.LogInformation("PDF rendered successfully for template '{Template}' ({Bytes} bytes)", templateName, pdf.Length);
+                _logger.LogInformation("PDF rendered successfully ({Bytes} bytes)", pdf.Length);
 
                 return pdf;
             }

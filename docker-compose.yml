@@ -1,0 +1,18 @@
+name: pdfService-stack
+
+services:
+  htmlpdf:
+    container_name: pdf-container
+    build:
+      context: .
+      dockerfile: HtmlPdf.Service/Dockerfile
+    ports:
+      - "6000:8080"
+    volumes:
+      - ./volumes/chromium_data:/app/chromium
+      - ./volumes/dynamic_templates:/app/Templates/DynamicTemplates
+    restart: unless-stopped
+
+volumes:
+  chromium_data:
+  dynamic_templates:

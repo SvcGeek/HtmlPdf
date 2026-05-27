@@ -22,16 +22,26 @@ namespace HtmlPdf.Service.Helpers
         /// </remarks>
         public static PdfOptions GetPdfOptionsOrDefault(IOptionsMonitor<PdfRenderingOptions> options, string? pagePdfConfigurationName = null)
         {
+            var allOptions = options.CurrentValue.PagePdfOptions;
 
-            var pdfOptions = new PagePdfOption();
+            if (allOptions.Count == 0)
+                throw new Exception("Ops... PagePdfOptions need to be inited!");
 
-            if (options.CurrentValue.PagePdfOptions.Count > 0)
+            PagePdfOption pdfOptions;
+
+            if (!string.IsNullOrWhiteSpace(pagePdfConfigurationName))
             {
-                if (string.IsNullOrWhiteSpace(pagePdfConfigurationName)) throw new Exception("PagePdfOptions has multiple values, you need to specify the one you need!");
-                pdfOptions = options.CurrentValue.PagePdfOptions.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.NameOption) && x.NameOption.Equals(pagePdfConfigurationName, StringComparison.CurrentCultureIgnoreCase)) ?? throw new Exception($"PagePdfOptions with name {pagePdfConfigurationName} not found!");
+                // Named lookup: find the specific configuration
+                pdfOptions = allOptions.FirstOrDefault(x =>
+                    !string.IsNullOrWhiteSpace(x.NameOption) &&
+                    x.NameOption.Equals(pagePdfConfigurationName, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new Exception($"PagePdfOptions with name '{pagePdfConfigurationName}' not found!");
             }
-
-            pdfOptions = options.CurrentValue.PagePdfOptions.FirstOrDefault() ?? throw new Exception("Ops... PagePdfOptions need to be inited!");
+            else
+            {
+                // No name specified: use the first available option
+                pdfOptions = allOptions.First();
+            }
 
             return new PdfOptions
             {

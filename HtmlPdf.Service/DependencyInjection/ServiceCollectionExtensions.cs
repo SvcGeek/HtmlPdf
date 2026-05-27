@@ -1,7 +1,9 @@
 ﻿using HtmlPdf.Service.Helpers;
 using HtmlPdf.Service.Options;
 using HtmlPdf.Service.PdfEndpoints;
+using HtmlPdf.Service.PdfHandlerEndpoints.DynamicEndpoints;
 using HtmlPdf.Service.Renderer;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HtmlPdf.Service.DependencyInjection
 {
@@ -35,6 +37,10 @@ namespace HtmlPdf.Service.DependencyInjection
             // RazorLight compiles .cshtml files to C# code, then to assemblies at runtime.
             services.AddSingleton<TemplateRenderer>();
 
+            // Dynamic template renderer – separate RazorLight engine pointing at DynamicTemplates/.
+            // Kept separate so static templates are never affected.
+            services.AddSingleton<DynamicTemplateRenderer>();
+
             // PDF renderer – uses the shared browser and the template renderer.
             // This is the main orchestrator: Template → HTML → PDF.
             services.AddSingleton<IPdfRenderer, PuppeteerPdfRenderer>();
@@ -42,6 +48,8 @@ namespace HtmlPdf.Service.DependencyInjection
             // Register all PDF handlers (IEndpoint implementations)
             // This automatically discovers and registers all endpoint handlers in the assembly.
             services.RegisterPdfHandlers();
+
+            services.RegisterDynamicPdfHandlers();
 
             return services;
         }
@@ -65,12 +73,43 @@ namespace HtmlPdf.Service.DependencyInjection
             var endpointType = typeof(IPdfEndpoint);
             var handlers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
-                .Where(t => endpointType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+                .Where(t => endpointType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract
+                //Dynamic handlers are already registered manually (with the correct templateName) by RegisterDynamicPdfHandlers().
+                            && t != typeof(DynamicEndpointPdfHandler));
 
             foreach (var handler in handlers)
             {
                 // Register each handler as a singleton under the IEndpoint interface
                 services.AddSingleton(endpointType, handler);
+            }
+        }
+
+
+        private static void RegisterDynamicPdfHandlers(this IServiceCollection services)
+        {
+            var templatesRoot = DynamicTemplateRenderer.TemplatesRoot;
+
+            // Ensure folder exists even before the DynamicTemplateRenderer singleton is resolved.
+            Directory.CreateDirectory(templatesRoot);
+
+            var templateFiles = Directory.GetFiles(templatesRoot, "*.cshtml");
+
+            foreach (var file in templateFiles)
+            {
+                var templateName = Path.GetFileNameWithoutExtension(file);
+
+                // Register a factory so DI can build the handler with the correct templateName.
+                services.AddSingleton<IPdfEndpoint>(sp =>
+                    new DynamicEndpointPdfHandler(
+                        sp.GetRequiredService<IPdfRenderer>(),
+                        sp.GetRequiredService<DynamicTemplateRenderer>(),
+                        templateName));
+
+#if DEBUG
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"📄 Dynamic template discovered → POST /pdf/dynamic/{templateName}");
+                Console.ResetColor();
+#endif
             }
         }
     }

@@ -1,6 +1,7 @@
 using HtmlPdf.Service.Options;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
+using PuppeteerSharp.BrowserData;
 
 namespace HtmlPdf.Service.Helpers
 {
@@ -70,17 +71,33 @@ namespace HtmlPdf.Service.Helpers
         /// </remarks>
         private async Task<IBrowser> LaunchAsync()
         {
-            _logger.LogInformation("Downloading / verifying Chromium…");
-            // BrowserFetcher downloads the correct Chromium version if not already present
-            // Downloads to ~/.local/share/puppeteer on Linux or %USERPROFILE%/.local-chromium on Windows
-            var fetcher = new BrowserFetcher();
+            // Use a dedicated volume path so Chromium survives container restarts.
+            // If the binary is already present, skip the download entirely.
+            var chromiumPath = _options.ChromiumPath;
+            Directory.CreateDirectory(chromiumPath);
 
-            await fetcher.DownloadAsync();
+            var fetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = chromiumPath });
+
+            var installed = fetcher.GetInstalledBrowsers().ToList();
+            InstalledBrowser installedBrowser;
+
+            if (installed.Count > 0)
+            {
+                installedBrowser = installed[0];
+                _logger.LogInformation("Chromium already present at '{Path}', skipping download.", chromiumPath);
+            }
+            else
+            {
+                _logger.LogInformation("Chromium not found at '{Path}', downloading…", chromiumPath);
+                installedBrowser = await fetcher.DownloadAsync();
+                _logger.LogInformation("Chromium download complete.");
+            }
 
             _logger.LogInformation("Launching Chromium browser…");
             var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true,
+                ExecutablePath = installedBrowser.GetExecutablePath(),
                 Args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
             });
 

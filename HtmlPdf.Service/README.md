@@ -17,6 +17,18 @@ For the full step-by-step guide see [🛠️ Creating a New PDF Endpoint](#️-c
 
 > **In breve:** metti un file `.cshtml` nella cartella `DynamicTemplates`, riavvia il container, e il servizio espone automaticamente un endpoint PDF per quel template. Niente codice, niente build.
 
+### 🐳 Immagine Docker
+
+L'immagine è disponibile su Docker Hub, pronta all'uso senza dover compilare il progetto:
+
+```sh
+docker pull svctech/svc-html-pdf
+```
+
+🔗 [hub.docker.com/r/svctech/svc-html-pdf](https://hub.docker.com/r/svctech/svc-html-pdf)
+
+---
+
 ### Come funziona
 
 Il servizio, ad ogni avvio, scansiona la cartella:

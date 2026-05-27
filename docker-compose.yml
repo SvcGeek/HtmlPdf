@@ -1,7 +1,7 @@
-name: pdfService-stack
+name: svc
 
 services:
-  htmlpdf:
+  html-pdf:
     container_name: pdf-container
     build:
       context: .

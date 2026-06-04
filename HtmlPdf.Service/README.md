@@ -1,6 +1,9 @@
-# HtmlPdf.Service
+# HtmlPdf.Service — Developer Reference
 
-A high-performance, minimal web API for converting HTML to PDF using Razor templates and headless Chromium.
+> For the full project overview, quick start, and Docker instructions see the [root README](../README.md).  
+> For architecture decisions see the [ADRs](../docs/adr/).
+
+This document is a quick technical reference for developers working inside the service.
 
 ## ⚡ Adding a New PDF Endpoint
 
@@ -323,7 +326,7 @@ public class MyCustomPdfHandler : IPdfEndpoint
 
 ### Step 5: Test the Endpoint
 ```bash
-curl -X POST http://localhost:5000/pdf/my-custom-template \
+curl -X POST http://localhost:5008/pdf/my-custom-template \
   -H "Content-Type: application/json" \
   -d '{
     "template": "my-custom-template",
